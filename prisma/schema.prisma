@@ -1,0 +1,73 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "./app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Status {
+  NON_FAIT
+  EN_COURS
+  REALISE
+  VALIDE
+}
+
+enum PhaseType {
+  preparation
+  passation
+  contractualization
+  execution
+}
+
+enum ActivityType {
+  ECOT
+  ADMIN
+}
+
+model EtapeActivity {
+  id          String   @id @default(uuid())
+
+  activityId  String
+  etapeId     String
+
+  status      Status?
+  commentaire String?
+  fichierJoint String?
+  date        DateTime?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  activity Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  etape    Etape    @relation(fields: [etapeId], references: [id], onDelete: Cascade)
+
+  @@unique([activityId, etapeId])
+}
+
+model Etape {
+  id        String    @id @default(uuid())
+  nom       String
+  phaseType PhaseType?
+
+  etapeActivities EtapeActivity[]
+}
+
+model Activity {
+  id        String   @id @default(uuid())
+  name      String
+  site      String
+  type      ActivityType
+
+  etapeActivities EtapeActivity[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
