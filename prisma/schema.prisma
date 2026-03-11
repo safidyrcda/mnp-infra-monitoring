@@ -34,20 +34,18 @@ enum ActivityType {
 
 model EtapeActivity {
   id          String   @id @default(uuid())
-
   activityId  String
   etapeId     String
-
   status      Status?
   commentaire String?
-  fichierJoint String?
+  isApplicable Boolean  @default(true)
   date        DateTime?
-
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   activity Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
   etape    Etape    @relation(fields: [etapeId], references: [id], onDelete: Cascade)
+  followUps EtapeActivityFollowUp[]
 
   @@unique([activityId, etapeId])
 }
@@ -70,4 +68,16 @@ model Activity {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model EtapeActivityFollowUp {
+  id              String   @id @default(uuid())
+  etapeActivityId String
+  commentaire     String
+  date            DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  status          Status?
+  fichierJoint    String?
+  etapeActivity   EtapeActivity @relation(fields: [etapeActivityId], references: [id], onDelete: Cascade)
 }

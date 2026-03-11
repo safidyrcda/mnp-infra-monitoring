@@ -111,7 +111,6 @@ async function main() {
     ],
   });
 
-  // ETAPE ACTIVITIES
   await prisma.etapeActivity.createMany({
     data: [
       {
