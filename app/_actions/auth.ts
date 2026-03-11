@@ -1,9 +1,7 @@
 'use server';
 
 import jwt from 'jsonwebtoken';
-
 import { prisma } from '@/lib/db-connect';
-
 import bcrypt from 'bcrypt';
 
 const JWT_SECRET = process.env.NEXT_PUBLIC_JWT_SECRET_KEY || 'key';
@@ -37,6 +35,7 @@ export async function verifyToken(token: string) {
 export async function register(data: {
   email: string;
   password: string;
+  role?: string;
 }): Promise<User | { error: string }> {
   const hashedPassword = await bcrypt.hash(data.password, 10);
   try {
@@ -44,7 +43,7 @@ export async function register(data: {
       data: {
         email: data.email,
         password: hashedPassword,
-        role: 'ADMIN',
+        role: data.role || 'ADMIN',
       },
     });
 
@@ -83,7 +82,17 @@ export const login = async (data: User) => {
 
     return result;
   } catch (err) {
-    console.error('💥 Erreur dans login:', err);
+    console.error('💥Erreur dans login:', err);
     return { error: 'Veuillez vérifier vos identifiants et réessayer' };
+  }
+};
+
+export const getAllUsers = async () => {
+  try {
+    const res = await prisma.user.findMany();
+
+    return res;
+  } catch (error) {
+    return [];
   }
 };
