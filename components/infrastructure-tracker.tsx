@@ -16,10 +16,13 @@ import {
   X,
   Save,
 } from 'lucide-react';
-import { Activity, EtapeActivity } from '@/lib/type';
-import { mockActivities } from '@/lib/mock';
-import { getAllEtapes } from '@/app/_actions/actions';
-import { Etape } from '@/prisma/app/generated/prisma/client';
+
+import { getAllActivities, getAllEtapes } from '@/app/_actions/actions';
+import {
+  Activity,
+  Etape,
+  EtapeActivity,
+} from '@/prisma/app/generated/prisma/client';
 
 const createActivityWithEtapes = (
   id: string,
@@ -31,6 +34,8 @@ const createActivityWithEtapes = (
   name,
   site,
   type,
+  createdAt: new Date(),
+  updatedAt: new Date(),
 });
 
 const statusColors = {
@@ -49,7 +54,7 @@ const statusIcons = {
 };
 
 export function InfrastructureTracker() {
-  const [activities, setActivities] = useState<Activity[]>(mockActivities);
+  const [activities, setActivities] = useState<Activity[]>([]);
   const [selectedSite, setSelectedSite] = useState('Tous les sites');
   const [expandedActivityId, setExpandedActivityId] = useState<string | null>(
     null,
@@ -67,8 +72,14 @@ export function InfrastructureTracker() {
     setEtapes(res);
   };
 
+  const fetchActivities = async () => {
+    const res = await getAllActivities();
+    setActivities(res);
+  };
+
   useEffect(() => {
     fetchEtapes();
+    fetchActivities();
   }, []);
   const groupEtapesByPhase = (activity: Activity) => {
     const phasesMap: Record<
@@ -254,82 +265,6 @@ export function InfrastructureTracker() {
                             <div className="flex items-center justify-between mb-3">
                               <span className="font-semibold">{et.nom}</span>
                             </div>
-
-                            {/* {et.etapeActivities.length > 0 && (
-                              <div className="space-y-2 mt-3">
-                                {etapes.map((etapeActivite) => {
-                                  const etape = etapeActivite.etape;
-
-                                  return (
-                                    <button
-                                      key={etapeActivite.id}
-                                      onClick={() =>
-                                        setExpandedEtapeId(
-                                          expandedEtapeId === etapeActivite.id
-                                            ? null
-                                            : etapeActivite.id,
-                                        )
-                                      }
-                                      className="w-full text-left p-2 bg-background rounded hover:bg-muted/50 transition-colors border border-border/50"
-                                    >
-                                      <div className="flex items-center justify-between">
-                                        <div className="flex-1">
-                                          <p className="text-sm font-medium">
-                                            {etape.nom}
-                                          </p>
-                                        </div>
-
-                                        <div className="flex items-center gap-2">
-                                          <Badge
-                                            className={
-                                              statusColors[etapeActivite.status]
-                                            }
-                                          >
-                                            {etapeActivite.status}
-                                          </Badge>
-
-                                          <ChevronDown
-                                            className={`w-4 h-4 text-muted-foreground transition-transform ${
-                                              expandedEtapeId ===
-                                              etapeActivite.id
-                                                ? 'rotate-180'
-                                                : ''
-                                            }`}
-                                          />
-                                        </div>
-                                      </div>
-
-                                      {expandedEtapeId === etapeActivite.id && (
-                                        <div className="mt-3 pt-3 border-t border-border/50 space-y-2 text-sm">
-                                          <select
-                                            value={etapeActivite.status}
-                                            onChange={(e) =>
-                                              handleUpdateEtapeStatus(
-                                                activity.id,
-                                              )
-                                            }
-                                            className="p-1 text-xs border border-border rounded bg-background"
-                                          >
-                                            <option value="Non fait">
-                                              Non fait
-                                            </option>
-                                            <option value="En cours">
-                                              En cours
-                                            </option>
-                                            <option value="Réalisé">
-                                              Réalisé
-                                            </option>
-                                            <option value="Validé">
-                                              Validé
-                                            </option>
-                                          </select>
-                                        </div>
-                                      )}
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                            )} */}
                           </div>
                         );
                       })}

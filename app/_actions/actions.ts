@@ -7,6 +7,7 @@ import {
   PhaseType,
   ActivityType,
   Etape,
+  EtapeActivity,
 } from '@/prisma/app/generated/prisma/client';
 
 // ---------------------------
@@ -122,12 +123,7 @@ export async function createEtapeActivity(data: {
 
 export async function updateEtapeActivity(
   id: string,
-  data: Partial<{
-    status: Status;
-    commentaire: string;
-    fichierJoint: string;
-    date: Date;
-  }>,
+  data: Partial<EtapeActivity>,
 ) {
   return prisma.etapeActivity.update({
     where: { id },
