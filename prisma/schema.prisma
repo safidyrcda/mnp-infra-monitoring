@@ -64,6 +64,15 @@ model Activity {
   etapeActivities EtapeActivity[]
   createdAt DateTime? @default(now())
   updatedAt DateTime? @updatedAt
+  preparationStartDate DateTime?
+  preparationEndDate DateTime?
+  passationStartDate DateTime?
+  passationEndDate DateTime?
+  contractualizationStartDate DateTime?
+  contractualizationEndDate DateTime? 
+  executionStartDate DateTime?
+  executionEndDate DateTime?
+  userActivities UserActivity[]
 }
 
 model EtapeActivityFollowUp {
@@ -75,5 +84,34 @@ model EtapeActivityFollowUp {
   updatedAt       DateTime @updatedAt
   status          Status?
   fichierJoint    String?
+  createdById     String?
+  createdBy       User? @relation("createdBy", fields: [createdById], references: [id], onDelete: SetNull)
+  validatedById   String?
+  validatedBy     User? @relation("validatedBy", fields: [validatedById], references: [id], onDelete: SetNull)
   etapeActivity   EtapeActivity @relation(fields: [etapeActivityId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  password  String
+  role     String
+  userActivities UserActivity[]
+  etapeActivityFollowUpsCreated EtapeActivityFollowUp[] @relation("createdBy")
+  etapeActivityFollowUpsValidated EtapeActivityFollowUp[] @relation("validatedBy")
+}
+
+model UserActivity {
+  id         String   @id @default(uuid())
+  userId     String
+  activityId String
+  role       String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  @@unique([userId, activityId])
 }

@@ -136,3 +136,9 @@ export async function deleteEtapeActivity(id: string) {
     where: { id },
   });
 }
+
+export async function getEtapeActivityFollowUpsByEtapeActivityId(id: string) {
+  return prisma.etapeActivityFollowUp.findMany({
+    where: { etapeActivityId: id },
+  });
+}

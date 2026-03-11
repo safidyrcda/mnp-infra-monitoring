@@ -15,13 +15,20 @@ import {
   AlertCircle,
   X,
   Save,
+  MessageCircle,
+  Paperclip,
 } from 'lucide-react';
 
-import { getAllActivities, getAllEtapes } from '@/app/_actions/actions';
+import {
+  getAllActivities,
+  getAllEtapes,
+  getEtapeActivitiesByActivity,
+} from '@/app/_actions/actions';
 import {
   Activity,
   Etape,
   EtapeActivity,
+  EtapeActivityFollowUp,
 } from '@/prisma/app/generated/prisma/client';
 
 const createActivityWithEtapes = (
@@ -29,7 +36,7 @@ const createActivityWithEtapes = (
   name: string,
   site: string,
   type: 'ECOT' | 'ADMIN',
-): Activity => ({
+): Partial<Activity> => ({
   id,
   name,
   site,
@@ -66,6 +73,19 @@ export function InfrastructureTracker() {
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
   const [formData, setFormData] = useState<Partial<Activity>>({});
   const [etapes, setEtapes] = useState<Etape[]>([]);
+  const [followUps, setFollowUps] = useState<
+    Map<string, EtapeActivityFollowUp[]>
+  >(new Map());
+  const [expandedEtapeActivityId, setExpandedEtapeActivityId] = useState<
+    string | null
+  >(null);
+  const [showFollowUpModal, setShowFollowUpModal] = useState(false);
+  const [selectedEtapeActivityId, setSelectedEtapeActivityId] = useState<
+    string | null
+  >(null);
+  const [followUpFormData, setFollowUpFormData] = useState<
+    Partial<EtapeActivityFollowUp>
+  >({});
 
   const fetchEtapes = async () => {
     const res = await getAllEtapes();
@@ -77,23 +97,51 @@ export function InfrastructureTracker() {
     setActivities(res);
   };
 
+  const fetchEtapeActivities = async (activityId: string) => {
+    const res = await getEtapeActivitiesByActivity(activityId);
+
+    return res;
+  };
+
+  const [etapeActivities, setEtapeActivities] = useState<EtapeActivity[]>([]);
+
+  const handleAddFollowUp = () => {
+    if (!selectedEtapeActivityId) return;
+    const newFollowUp: EtapeActivityFollowUp = {
+      id: Date.now().toString(),
+      etapeActivityId: selectedEtapeActivityId,
+      commentaire: followUpFormData.commentaire || '',
+      date: followUpFormData.date || new Date(),
+      status: followUpFormData.status || 'EN_COURS',
+      fichierJoint: followUpFormData.fichierJoint || null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      createdById: null,
+      validatedById: null,
+    };
+
+    const updated = new Map(followUps);
+    const current = updated.get(selectedEtapeActivityId) || [];
+    updated.set(selectedEtapeActivityId, [...current, newFollowUp]);
+    setFollowUps(updated);
+
+    setShowFollowUpModal(false);
+    setFollowUpFormData({});
+    setSelectedEtapeActivityId(null);
+  };
+
+  useEffect(() => {
+    if (expandedActivityId) {
+      fetchEtapeActivities(expandedActivityId).then((data) => {
+        setEtapeActivities(data);
+      });
+    }
+  }, [expandedActivityId]);
+
   useEffect(() => {
     fetchEtapes();
     fetchActivities();
   }, []);
-  const groupEtapesByPhase = (activity: Activity) => {
-    const phasesMap: Record<
-      'preparation' | 'passation' | 'contractualization' | 'execution',
-      EtapeActivity[]
-    > = {
-      preparation: [],
-      passation: [],
-      contractualization: [],
-      execution: [],
-    };
-
-    return phasesMap;
-  };
 
   const sites = useMemo(() => {
     const uniqueSites = [
@@ -121,7 +169,7 @@ export function InfrastructureTracker() {
       formData.site || 'Ranomafana',
       formData.type || 'ECOT',
     );
-    setActivities([...activities, newActivity]);
+    setActivities([...activities, newActivity as Activity]);
     setShowAddModal(false);
     setFormData({});
   };
@@ -139,6 +187,30 @@ export function InfrastructureTracker() {
 
   const handleDeleteActivity = (id: string) => {
     setActivities(activities.filter((a) => a.id !== id));
+  };
+
+  const groupEtapesByPhase = () => {
+    const phasesMap: Record<
+      'preparation' | 'passation' | 'contractualization' | 'execution',
+      { etape: EtapeActivity & { etapeName: string }; etapeObj?: Etape }[]
+    > = {
+      preparation: [],
+      passation: [],
+      contractualization: [],
+      execution: [],
+    };
+
+    etapeActivities.forEach((et) => {
+      const etape = etapes.find((e) => e.id === et.etapeId);
+      if (etape?.phaseType) {
+        phasesMap[etape.phaseType].push({
+          etape: { ...et, etapeName: etape.nom },
+          etapeObj: etape,
+        });
+      }
+    });
+
+    return phasesMap;
   };
 
   const handleUpdateEtapeStatus = (activityId: string) => {
@@ -255,19 +327,189 @@ export function InfrastructureTracker() {
 
                 {expandedActivityId === activity.id && (
                   <CardContent className="pt-0 border-t border-border">
-                    <div className="mt-4 space-y-4">
-                      {etapes.map((et) => {
+                    <div className="mt-4 space-y-6">
+                      {(() => {
+                        const phases = groupEtapesByPhase();
+                        const phaseLabels: Record<string, string> = {
+                          preparation: 'Phase de Préparation',
+                          passation: 'Phase de Passation',
+                          contractualization: 'Phase de Contractualisation',
+                          execution: "Phase d'Exécution",
+                        };
+                        const phaseBgColors: Record<string, string> = {
+                          preparation:
+                            'bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800',
+                          passation:
+                            'bg-purple-50 dark:bg-purple-950 border-purple-200 dark:border-purple-800',
+                          contractualization:
+                            'bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800',
+                          execution:
+                            'bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800',
+                        };
+
                         return (
+                          Object.keys(phases) as Array<keyof typeof phases>
+                        ).map((phaseType) => (
                           <div
-                            key={et.id}
-                            className="p-4 bg-muted/30 rounded-lg border border-border"
+                            key={phaseType}
+                            className={`p-4 rounded-lg border-2 ${phaseBgColors[phaseType]}`}
                           >
-                            <div className="flex items-center justify-between mb-3">
-                              <span className="font-semibold">{et.nom}</span>
+                            <h3 className="text-lg font-bold mb-4 text-foreground">
+                              {phaseLabels[phaseType]}
+                            </h3>
+                            <div className="space-y-3">
+                              {phases[phaseType].length === 0 ? (
+                                <p className="text-sm text-muted-foreground italic">
+                                  Aucune étape
+                                </p>
+                              ) : (
+                                phases[phaseType].map((item) => (
+                                  <div
+                                    key={item.etape.id}
+                                    className="bg-background rounded border border-border p-3"
+                                  >
+                                    <div className="flex items-center justify-between mb-2">
+                                      <div className="flex-1">
+                                        <span className="font-semibold text-foreground">
+                                          {item.etape.etapeName}
+                                        </span>
+                                        <div className="mt-1 flex gap-2">
+                                          <Badge variant="outline">
+                                            {item.etape.status || 'NON_FAIT'}
+                                          </Badge>
+                                        </div>
+                                      </div>
+                                      <button
+                                        onClick={() =>
+                                          setExpandedEtapeActivityId(
+                                            expandedEtapeActivityId ===
+                                              item.etape.id
+                                              ? null
+                                              : item.etape.id,
+                                          )
+                                        }
+                                        className="p-1 hover:bg-muted rounded"
+                                      >
+                                        <ChevronDown
+                                          className={`w-4 h-4 transition-transform ${
+                                            expandedEtapeActivityId ===
+                                            item.etape.id
+                                              ? 'rotate-180'
+                                              : ''
+                                          }`}
+                                        />
+                                      </button>
+                                    </div>
+
+                                    {expandedEtapeActivityId ===
+                                      item.etape.id && (
+                                      <div className="mt-3 space-y-3 border-t border-border pt-3">
+                                        <div className="text-sm">
+                                          <p className="text-muted-foreground">
+                                            Commentaire:
+                                          </p>
+                                          <p className="text-foreground mt-1">
+                                            {item.etape.commentaire ||
+                                              'Aucun commentaire'}
+                                          </p>
+                                        </div>
+
+                                        {item.etape.dueDate && (
+                                          <div className="text-sm">
+                                            <p className="text-muted-foreground">
+                                              Date limite:
+                                            </p>
+                                            <p className="text-foreground">
+                                              {new Date(
+                                                item.etape.dueDate,
+                                              ).toLocaleDateString('fr-FR')}
+                                            </p>
+                                          </div>
+                                        )}
+
+                                        <div className="bg-muted/50 rounded p-2 mt-2">
+                                          <div className="flex items-center justify-between mb-2">
+                                            <span className="text-sm font-semibold flex items-center gap-2">
+                                              <MessageCircle className="w-4 h-4" />
+                                              Suivis (
+                                              {
+                                                (
+                                                  followUps.get(
+                                                    item.etape.id,
+                                                  ) || []
+                                                ).length
+                                              }
+                                              )
+                                            </span>
+                                            <Button
+                                              size="sm"
+                                              variant="ghost"
+                                              onClick={() => {
+                                                setSelectedEtapeActivityId(
+                                                  item.etape.id,
+                                                );
+                                                setShowFollowUpModal(true);
+                                              }}
+                                            >
+                                              <Plus className="w-3 h-3 mr-1" />
+                                              Ajouter
+                                            </Button>
+                                          </div>
+
+                                          <div className="space-y-2">
+                                            {(
+                                              followUps.get(item.etape.id) || []
+                                            ).map((followUp) => (
+                                              <div
+                                                key={followUp.id}
+                                                className="bg-background border border-border rounded p-2 text-sm"
+                                              >
+                                                <div className="flex items-start justify-between">
+                                                  <div className="flex-1">
+                                                    <p className="text-foreground font-medium">
+                                                      {followUp.commentaire}
+                                                    </p>
+                                                    <p className="text-xs text-muted-foreground mt-1">
+                                                      {new Date(
+                                                        followUp.date ||
+                                                          new Date(),
+                                                      ).toLocaleDateString(
+                                                        'fr-FR',
+                                                      )}{' '}
+                                                      -{followUp.status}
+                                                    </p>
+                                                    {followUp.fichierJoint && (
+                                                      <p className="text-xs text-primary mt-1 flex items-center gap-1">
+                                                        <Paperclip className="w-3 h-3" />
+                                                        {followUp.fichierJoint}
+                                                      </p>
+                                                    )}
+                                                  </div>
+                                                  {/* <button
+                                                    onClick={() =>
+                                                      handleDeleteFollowUp(
+                                                        item.etape.id,
+                                                        followUp.id,
+                                                      )
+                                                    }
+                                                    className="text-destructive hover:text-destructive/80 p-1"
+                                                  >
+                                                    <X className="w-4 h-4" />
+                                                  </button> */}
+                                                </div>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                ))
+                              )}
                             </div>
                           </div>
-                        );
-                      })}
+                        ));
+                      })()}
                     </div>
 
                     <div className="mt-4 flex justify-end gap-2 pt-4 border-t border-border">
@@ -297,6 +539,122 @@ export function InfrastructureTracker() {
             ))
           )}
         </div>
+
+        {showFollowUpModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <Card className="w-full max-w-md border-border">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                <CardTitle>Ajouter un suivi</CardTitle>
+                <button
+                  onClick={() => {
+                    setShowFollowUpModal(false);
+                    setFollowUpFormData({});
+                    setSelectedEtapeActivityId(null);
+                  }}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium text-foreground">
+                    Commentaire
+                  </label>
+                  <textarea
+                    value={followUpFormData.commentaire || ''}
+                    onChange={(e) =>
+                      setFollowUpFormData({
+                        ...followUpFormData,
+                        commentaire: e.target.value,
+                      })
+                    }
+                    placeholder="Entrez votre commentaire"
+                    className="mt-1 w-full p-2 border border-border rounded-md bg-card text-foreground min-h-24"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-foreground">
+                    Statut
+                  </label>
+                  <select
+                    value={followUpFormData.status || 'EN_COURS'}
+                    onChange={(e) =>
+                      setFollowUpFormData({
+                        ...followUpFormData,
+                        status: e.target
+                          .value as EtapeActivityFollowUp['status'],
+                      })
+                    }
+                    className="w-full mt-1 p-2 border border-border rounded-md bg-card text-foreground"
+                  >
+                    <option value="NON_FAIT">{'Non fait'}</option>
+                    <option value="EN_COURS">{'En cours'}</option>
+                    <option value="REALISE">{'Réalisé'}</option>
+                    <option value="VALIDE">{'Validé'}</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-foreground">
+                    Date
+                  </label>
+                  <input
+                    type="date"
+                    value={
+                      followUpFormData.date
+                        ? new Date(followUpFormData.date)
+                            .toISOString()
+                            .split('T')[0]
+                        : ''
+                    }
+                    onChange={(e) =>
+                      setFollowUpFormData({
+                        ...followUpFormData,
+                        date: new Date(e.target.value),
+                      })
+                    }
+                    className="w-full mt-1 p-2 border border-border rounded-md bg-card text-foreground"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-foreground">
+                    Fichier joint (optionnel)
+                  </label>
+                  <Input
+                    value={followUpFormData.fichierJoint || ''}
+                    onChange={(e) =>
+                      setFollowUpFormData({
+                        ...followUpFormData,
+                        fichierJoint: e.target.value,
+                      })
+                    }
+                    placeholder="Nom du fichier"
+                    className="mt-1 bg-card border-border"
+                  />
+                </div>
+                <div className="flex gap-2 justify-end pt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowFollowUpModal(false);
+                      setFollowUpFormData({});
+                      setSelectedEtapeActivityId(null);
+                    }}
+                  >
+                    Annuler
+                  </Button>
+                  <Button
+                    onClick={handleAddFollowUp}
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Ajouter
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {showAddModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
