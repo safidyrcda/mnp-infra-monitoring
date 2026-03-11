@@ -8,6 +8,7 @@ import {
   ActivityType,
   Etape,
   EtapeActivity,
+  EtapeActivityFollowUp,
 } from '@/prisma/app/generated/prisma/client';
 
 // ---------------------------
@@ -141,4 +142,12 @@ export async function getEtapeActivityFollowUpsByEtapeActivityId(id: string) {
   return prisma.etapeActivityFollowUp.findMany({
     where: { etapeActivityId: id },
   });
+}
+
+export async function createEtapeActivityFollowUp(data: EtapeActivityFollowUp) {
+  return prisma.etapeActivityFollowUp.create({ data });
+}
+
+export async function getAllFollowUps() {
+  return prisma.etapeActivityFollowUp.findMany();
 }

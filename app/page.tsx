@@ -1,4 +1,4 @@
-import { InfrastructureTracker } from '@/components/infrastructure-tracker';
+import { InfrastructureTracker } from './_components/InfrastructureTracker';
 
 export default function Home() {
   return (

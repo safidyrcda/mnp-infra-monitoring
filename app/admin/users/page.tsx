@@ -3,7 +3,6 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { Plus, Edit2, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 import { useUsers } from './hooks/use-users';

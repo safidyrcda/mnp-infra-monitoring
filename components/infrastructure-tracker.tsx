@@ -10,9 +10,6 @@ import {
   Plus,
   Edit2,
   Trash2,
-  Check,
-  Clock,
-  AlertCircle,
   X,
   Save,
   MessageCircle,
@@ -45,28 +42,12 @@ const createActivityWithEtapes = (
   updatedAt: new Date(),
 });
 
-const statusColors = {
-  'Non fait': 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200',
-  'En cours':
-    'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-  Réalisé: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-  Validé: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-};
-
-const statusIcons = {
-  'Non fait': AlertCircle,
-  'En cours': Clock,
-  Réalisé: Check,
-  Validé: Check,
-};
-
 export function InfrastructureTracker() {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [selectedSite, setSelectedSite] = useState('Tous les sites');
   const [expandedActivityId, setExpandedActivityId] = useState<string | null>(
     null,
   );
-  const [expandedEtapeId, setExpandedEtapeId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
