@@ -12,19 +12,20 @@ import {
   getAllTasks,
   getAllFollowUps,
   getTaskActivitiesByActivity,
+  updateTaskActivity,
 } from '@/app/_actions/actions';
 import {
   Activity,
   Task,
   TaskActivity,
   TaskActivityFollowUp,
-  TaskValueType,
 } from '@/app/_types/types';
 
 import { ActivityCard } from './ActivityCard';
 import { ActivityModal } from './ActivityModal';
 import { FollowUpModal } from './FollowUpModal';
-import { groupTasksByPhase } from '../_utils/utils';
+import { TaskActivityModal } from './TaskActivityModal';
+import { groupTasksByPhase, TaskActivityWithName } from '../_utils/utils';
 
 export type FollowUpsMap = Map<string, TaskActivityFollowUp[]>;
 
@@ -38,22 +39,23 @@ export function InfrastructureTracker() {
   // ─── UI state ────────────────────────────────────────────────────────────────
   const [selectedSite, setSelectedSite] = useState('Tous les sites');
   const [searchTerm, setSearchTerm] = useState('');
-  const [expandedActivityId, setExpandedActivityId] = useState<string | null>(
-    null,
-  );
-  const [expandedTaskActivityId, setExpandedTaskActivityId] = useState<
-    string | null
-  >(null);
+  const [expandedActivityId, setExpandedActivityId] = useState<string | null>(null);
+  const [expandedTaskActivityId, setExpandedTaskActivityId] = useState<string | null>(null);
 
   // ─── Modal state ─────────────────────────────────────────────────────────────
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
+
+  // Suivi : stocke juste id + nom de la tâche
   const [followUpContext, setFollowUpContext] = useState<{
     taskActivityId: string;
-    valueType: TaskValueType;
     taskName: string;
   } | null>(null);
+
+  // Édition d'une TaskActivity (dueDate, status, commentaire)
+  const [editingTaskActivity, setEditingTaskActivity] =
+    useState<TaskActivityWithName | null>(null);
 
   // ─── Data fetching ───────────────────────────────────────────────────────────
 
@@ -84,11 +86,8 @@ export function InfrastructureTracker() {
   const filteredActivities = useMemo(
     () =>
       activities.filter((a) => {
-        const matchesSite =
-          selectedSite === 'Tous les sites' || a.site === selectedSite;
-        const matchesSearch = a.name
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase());
+        const matchesSite = selectedSite === 'Tous les sites' || a.site === selectedSite;
+        const matchesSearch = a.name.toLowerCase().includes(searchTerm.toLowerCase());
         return matchesSite && matchesSearch;
       }),
     [activities, selectedSite, searchTerm],
@@ -115,9 +114,7 @@ export function InfrastructureTracker() {
   };
 
   const handleEditActivity = (updated: Activity) => {
-    setActivities((prev) =>
-      prev.map((a) => (a.id === updated.id ? updated : a)),
-    );
+    setActivities((prev) => prev.map((a) => (a.id === updated.id ? updated : a)));
     setShowEditModal(false);
     setEditingActivity(null);
   };
@@ -135,9 +132,9 @@ export function InfrastructureTracker() {
       taskActivityId,
       commentaire: data.commentaire ?? null,
       status: data.status ?? null,
-      valueString: data.valueString ?? null,
-      valueNumber: data.valueNumber ?? null,
-      valueDate: data.valueDate ?? null,
+      valueString: null,
+      valueNumber: null,
+      valueDate: null,
       problemDescription: data.problemDescription ?? null,
       proposedSolution: data.proposedSolution ?? null,
       nextAction: data.nextAction ?? null,
@@ -152,13 +149,25 @@ export function InfrastructureTracker() {
 
     setFollowUps((prev) => {
       const updated = new Map(prev);
-      updated.set(taskActivityId, [
-        ...(updated.get(taskActivityId) ?? []),
-        newFollowUp,
-      ]);
+      updated.set(taskActivityId, [...(updated.get(taskActivityId) ?? []), newFollowUp]);
       return updated;
     });
     setFollowUpContext(null);
+  };
+
+  const handleUpdateTaskActivity = async (
+    data: Pick<TaskActivity, 'dueDate' | 'status' | 'commentaire'>,
+  ) => {
+    if (!editingTaskActivity) return;
+
+    await updateTaskActivity(editingTaskActivity.id, data);
+
+    setTaskActivities((prev) =>
+      prev.map((ta) =>
+        ta.id === editingTaskActivity.id ? { ...ta, ...data } : ta,
+      ),
+    );
+    setEditingTaskActivity(null);
   };
 
   // ─── Render ──────────────────────────────────────────────────────────────────
@@ -173,9 +182,7 @@ export function InfrastructureTracker() {
               <h1 className="text-3xl md:text-4xl font-bold text-foreground">
                 Suivi des Infrastructures
               </h1>
-              <p className="text-muted-foreground mt-1">
-                Madagascar National Parks
-              </p>
+              <p className="text-muted-foreground mt-1">Madagascar National Parks</p>
             </div>
             <Button
               onClick={() => setShowAddModal(true)}
@@ -240,9 +247,10 @@ export function InfrastructureTracker() {
                 onToggleTask={(id) =>
                   setExpandedTaskActivityId((prev) => (prev === id ? null : id))
                 }
-                onOpenFollowUp={(taskActivityId, valueType, taskName) =>
-                  setFollowUpContext({ taskActivityId, valueType, taskName })
+                onOpenFollowUp={(taskActivityId, taskName) =>
+                  setFollowUpContext({ taskActivityId, taskName })
                 }
+                onEditTaskActivity={setEditingTaskActivity}
                 onEdit={() => {
                   setEditingActivity(activity);
                   setShowEditModal(true);
@@ -254,7 +262,7 @@ export function InfrastructureTracker() {
         </div>
       </div>
 
-      {/* Modals */}
+      {/* Modal nouvelle activité */}
       {showAddModal && (
         <ActivityModal
           title="Nouvelle Activité"
@@ -264,6 +272,7 @@ export function InfrastructureTracker() {
         />
       )}
 
+      {/* Modal édition activité */}
       {showEditModal && editingActivity && (
         <ActivityModal
           title="Éditer l'activité"
@@ -273,19 +282,27 @@ export function InfrastructureTracker() {
             setShowEditModal(false);
             setEditingActivity(null);
           }}
-          onSubmit={(data) =>
-            handleEditActivity({ ...editingActivity, ...data })
-          }
+          onSubmit={(data) => handleEditActivity({ ...editingActivity, ...data })}
           submitLabel="Enregistrer"
         />
       )}
 
+      {/* Modal suivi */}
       {followUpContext && (
         <FollowUpModal
           taskName={followUpContext.taskName}
-          valueType={followUpContext.valueType}
           onClose={() => setFollowUpContext(null)}
           onSubmit={handleAddFollowUp}
+        />
+      )}
+
+      {/* Modal édition TaskActivity */}
+      {editingTaskActivity && (
+        <TaskActivityModal
+          taskName={editingTaskActivity.taskName}
+          taskActivity={editingTaskActivity}
+          onClose={() => setEditingTaskActivity(null)}
+          onSubmit={handleUpdateTaskActivity}
         />
       )}
     </div>

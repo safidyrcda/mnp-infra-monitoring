@@ -12,7 +12,7 @@ import {
   PHASE_BG_COLORS,
   PHASE_DESCRIPTIONS,
   PhaseType,
-  TaskValueType,
+  TaskActivityWithName,
 } from '@/app/_utils/utils';
 import { FollowUpsMap } from './InfrastructureTracker';
 import { TaskList } from './TaskList';
@@ -25,11 +25,8 @@ interface ActivityCardProps {
   followUps: FollowUpsMap;
   expandedTaskActivityId: string | null;
   onToggleTask: (id: string) => void;
-  onOpenFollowUp: (
-    taskActivityId: string,
-    valueType: TaskValueType,
-    taskName: string,
-  ) => void;
+  onOpenFollowUp: (taskActivityId: string, taskName: string) => void;
+  onEditTaskActivity: (taskActivity: TaskActivityWithName) => void;
   onEdit: () => void;
   onDelete: () => void;
 }
@@ -43,6 +40,7 @@ export function ActivityCard({
   expandedTaskActivityId,
   onToggleTask,
   onOpenFollowUp,
+  onEditTaskActivity,
   onEdit,
   onDelete,
 }: ActivityCardProps) {
@@ -92,6 +90,7 @@ export function ActivityCard({
                   expandedTaskActivityId={expandedTaskActivityId}
                   onToggleTask={onToggleTask}
                   onOpenFollowUp={onOpenFollowUp}
+                  onEditTaskActivity={onEditTaskActivity}
                 />
               </div>
             ))}
