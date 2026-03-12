@@ -3,15 +3,13 @@ import {
   PhaseType,
   PrismaClient,
   Status,
-  StepValueType,
+  TaskValueType,
 } from './app/generated/prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
-import { mockActivities, mockSteps } from './mock-data';
+import { mockActivities, mockTasks } from './mock-data';
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
-
-// ─── Ordre des phases ─────────────────────────────────────────────────────────
 
 const PHASE_ORDER: Record<PhaseType, number> = {
   preparation: 1,
@@ -19,8 +17,6 @@ const PHASE_ORDER: Record<PhaseType, number> = {
   contractualization: 3,
   execution: 4,
 };
-
-// ─── Main ─────────────────────────────────────────────────────────────────────
 
 async function main() {
   console.log('🌱 Démarrage du seed...\n');
@@ -32,29 +28,27 @@ async function main() {
       name: string;
       site: string;
       type: ActivityType;
-      createdAt: Date;
-      updatedAt: Date;
     }>,
     skipDuplicates: true,
   });
   const activities = await prisma.activity.findMany();
   console.log(`   ✔ ${activities.length} activités créées`);
 
-  // 2. STEPS
-  console.log('📋 Création des steps...');
-  await prisma.step.createMany({
-    data: mockSteps as Array<{
+  // 2. TASKS (référentiel commun à toutes les activités)
+  console.log('📋 Création des tâches...');
+  await prisma.task.createMany({
+    data: mockTasks as Array<{
       name: string;
       phaseType: PhaseType;
       order: number;
-      valueType: StepValueType;
+      valueType: TaskValueType;
     }>,
     skipDuplicates: true,
   });
-  const steps = await prisma.step.findMany();
-  console.log(`   ✔ ${steps.length} steps créés`);
+  const tasks = await prisma.task.findMany();
+  console.log(`   ✔ ${tasks.length} tâches créées`);
 
-  // 3. PHASES — une phase par (activity × phaseType)
+  // 3. PHASES — une par (activity × phaseType)
   console.log('🔖 Création des phases...');
   const phaseData = activities.flatMap((activity) =>
     (Object.keys(PHASE_ORDER) as PhaseType[]).map((phaseType) => ({
@@ -67,39 +61,33 @@ async function main() {
   const phases = await prisma.phase.findMany();
   console.log(`   ✔ ${phases.length} phases créées`);
 
-  // 4. Lier les steps aux phases (Phase ↔ Step many-to-many)
-  console.log('🔗 Association steps ↔ phases...');
+  // 4. Association Phase ↔ Task (many-to-many)
+  console.log('🔗 Association tâches ↔ phases...');
   for (const phase of phases) {
-    const matchingSteps = steps.filter((s) => s.phaseType === phase.type);
+    const matchingTasks = tasks.filter((t) => t.phaseType === phase.type);
     await prisma.phase.update({
       where: { id: phase.id },
-      data: {
-        steps: {
-          connect: matchingSteps.map((s) => ({ id: s.id })),
-        },
-      },
+      data: { tasks: { connect: matchingTasks.map((t) => ({ id: t.id })) } },
     });
   }
-  console.log(`   ✔ Steps associés aux phases`);
+  console.log('   ✔ Tâches associées aux phases');
 
-  // 5. STEP ACTIVITIES — un StepActivity par (activity × step)
-  console.log('⚙️  Création des stepActivities...');
-  const stepActivityData = activities.flatMap((activity) =>
-    steps.map((step) => ({
+  // 5. TASK ACTIVITIES — une par (activity × task)
+  console.log('⚙️  Création des taskActivities...');
+  const taskActivityData = activities.flatMap((activity) =>
+    tasks.map((task) => ({
       activityId: activity.id,
-      stepId: step.id,
+      taskId: task.id,
       status: Status.NON_FAIT,
       isApplicable: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
     })),
   );
-  await prisma.stepActivity.createMany({
-    data: stepActivityData,
+  await prisma.taskActivity.createMany({
+    data: taskActivityData,
     skipDuplicates: true,
   });
-  const stepActivities = await prisma.stepActivity.findMany();
-  console.log(`   ✔ ${stepActivities.length} stepActivities créées`);
+  const taskActivities = await prisma.taskActivity.findMany();
+  console.log(`   ✔ ${taskActivities.length} taskActivities créées`);
 
   console.log('\n✅ Seed terminé avec succès');
 }

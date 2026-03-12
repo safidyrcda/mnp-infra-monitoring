@@ -4,20 +4,16 @@ import { prisma } from '@/lib/db-connect';
 import {
   Status,
   ActivityType,
-  StepActivity,
-  StepActivityFollowUp,
+  TaskActivity,
+  TaskActivityFollowUp,
 } from '@/prisma/app/generated/prisma/client';
 
-// ---------------------------
-// ACTIVITY
-// ---------------------------
+// ─── Activity ─────────────────────────────────────────────────────────────────
 
 export async function getAllActivities() {
   return prisma.activity.findMany({
     include: {
-      stepActivities: {
-        include: { step: true },
-      },
+      taskActivities: { include: { task: true } },
     },
   });
 }
@@ -26,9 +22,7 @@ export async function getActivityById(activityId: string) {
   return prisma.activity.findUnique({
     where: { id: activityId },
     include: {
-      stepActivities: {
-        include: { step: true },
-      },
+      taskActivities: { include: { task: true } },
     },
   });
 }
@@ -52,93 +46,59 @@ export async function deleteActivity(id: string) {
   return prisma.activity.delete({ where: { id } });
 }
 
-// ---------------------------
-// STEP
-// ---------------------------
+// ─── Task ─────────────────────────────────────────────────────────────────────
 
-export async function getAllSteps() {
-  return prisma.step.findMany();
-}
-
-export async function getStepById(stepId: string) {
-  return prisma.step.findUnique({
-    where: { id: stepId },
-    include: { stepActivities: true },
+export async function getAllTasks() {
+  return prisma.task.findMany({
+    orderBy: [{ phaseType: 'asc' }, { order: 'asc' }],
   });
 }
 
-// ---------------------------
-// STEP ACTIVITY
-// ---------------------------
+// ─── TaskActivity ─────────────────────────────────────────────────────────────
 
-export async function getAllStepActivities() {
-  return prisma.stepActivity.findMany({
-    include: { step: true, activity: true },
-  });
-}
-
-export async function getStepActivitiesByActivity(activityId: string) {
-  return prisma.stepActivity.findMany({
+export async function getTaskActivitiesByActivity(activityId: string) {
+  return prisma.taskActivity.findMany({
     where: { activityId },
-    include: { step: true },
+    include: { task: true },
+    orderBy: { task: { order: 'asc' } },
   });
 }
 
-export async function getStepActivitiesByStep(stepId: string) {
-  return prisma.stepActivity.findMany({
-    where: { stepId },
-    include: { activity: true },
-  });
-}
-
-export async function createStepActivity(data: {
-  activityId: string;
-  stepId: string;
-  status?: Status;
-  commentaire?: string;
-  dueDate?: Date;
-}) {
-  return prisma.stepActivity.create({ data });
-}
-
-export async function updateStepActivity(
+export async function updateTaskActivity(
   id: string,
-  data: Partial<Omit<StepActivity, 'id' | 'createdAt' | 'updatedAt'>>,
+  data: Partial<Omit<TaskActivity, 'id' | 'createdAt' | 'updatedAt'>>,
 ) {
-  return prisma.stepActivity.update({ where: { id }, data });
+  return prisma.taskActivity.update({ where: { id }, data });
 }
 
-export async function deleteStepActivity(id: string) {
-  return prisma.stepActivity.delete({ where: { id } });
-}
-
-// ---------------------------
-// STEP ACTIVITY FOLLOW UP
-// ---------------------------
+// ─── TaskActivityFollowUp ─────────────────────────────────────────────────────
 
 export async function getAllFollowUps() {
-  return prisma.stepActivityFollowUp.findMany();
-}
-
-export async function getFollowUpsByStepActivity(stepActivityId: string) {
-  return prisma.stepActivityFollowUp.findMany({
-    where: { stepActivityId },
+  return prisma.taskActivityFollowUp.findMany({
+    orderBy: { createdAt: 'asc' },
   });
 }
 
-export async function createStepActivityFollowUp(
-  data: Omit<StepActivityFollowUp, 'id' | 'createdAt' | 'updatedAt'>,
-) {
-  return prisma.stepActivityFollowUp.create({ data });
+export async function getFollowUpsByTaskActivity(taskActivityId: string) {
+  return prisma.taskActivityFollowUp.findMany({
+    where: { taskActivityId },
+    orderBy: { createdAt: 'asc' },
+  });
 }
 
-export async function updateStepActivityFollowUp(
+export async function createTaskActivityFollowUp(
+  data: Omit<TaskActivityFollowUp, 'id' | 'createdAt' | 'updatedAt'>,
+) {
+  return prisma.taskActivityFollowUp.create({ data });
+}
+
+export async function updateTaskActivityFollowUp(
   id: string,
-  data: Partial<Omit<StepActivityFollowUp, 'id' | 'createdAt' | 'updatedAt'>>,
+  data: Partial<Omit<TaskActivityFollowUp, 'id' | 'createdAt' | 'updatedAt'>>,
 ) {
-  return prisma.stepActivityFollowUp.update({ where: { id }, data });
+  return prisma.taskActivityFollowUp.update({ where: { id }, data });
 }
 
-export async function deleteStepActivityFollowUp(id: string) {
-  return prisma.stepActivityFollowUp.delete({ where: { id } });
+export async function deleteTaskActivityFollowUp(id: string) {
+  return prisma.taskActivityFollowUp.delete({ where: { id } });
 }

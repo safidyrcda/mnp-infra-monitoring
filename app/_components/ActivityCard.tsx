@@ -4,11 +4,18 @@ import { ChevronDown, Edit2, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Activity } from '@/app/_types/types';
 
-import { PhasesMap, PHASE_LABELS, PHASE_BG_COLORS, PhaseType } from './utils';
+import {
+  PhasesMap,
+  PHASE_LABELS,
+  PHASE_BG_COLORS,
+  PHASE_DESCRIPTIONS,
+  PhaseType,
+  TaskValueType,
+} from '@/app/_utils/utils';
 import { FollowUpsMap } from './InfrastructureTracker';
-import { StepList } from './StepList';
-import { Activity } from '@/prisma/app/generated/prisma/browser';
+import { TaskList } from './TaskList';
 
 interface ActivityCardProps {
   activity: Activity;
@@ -16,9 +23,13 @@ interface ActivityCardProps {
   onToggle: () => void;
   phases: PhasesMap;
   followUps: FollowUpsMap;
-  expandedStepActivityId: string | null;
-  onToggleStep: (id: string) => void;
-  onOpenFollowUp: (stepActivityId: string) => void;
+  expandedTaskActivityId: string | null;
+  onToggleTask: (id: string) => void;
+  onOpenFollowUp: (
+    taskActivityId: string,
+    valueType: TaskValueType,
+    taskName: string,
+  ) => void;
   onEdit: () => void;
   onDelete: () => void;
 }
@@ -29,8 +40,8 @@ export function ActivityCard({
   onToggle,
   phases,
   followUps,
-  expandedStepActivityId,
-  onToggleStep,
+  expandedTaskActivityId,
+  onToggleTask,
   onOpenFollowUp,
   onEdit,
   onDelete,
@@ -45,9 +56,7 @@ export function ActivityCard({
           <div className="flex-1">
             <div className="flex items-start gap-3">
               <ChevronDown
-                className={`w-5 h-5 mt-1 text-muted-foreground transition-transform ${
-                  isExpanded ? 'rotate-180' : ''
-                }`}
+                className={`w-5 h-5 mt-1 text-muted-foreground transition-transform ${isExpanded ? 'rotate-180' : ''}`}
               />
               <div className="flex-1">
                 <CardTitle className="text-lg">{activity.name}</CardTitle>
@@ -58,28 +67,30 @@ export function ActivityCard({
               </div>
             </div>
           </div>
-          <div className="text-right">
-            <p className="text-xs text-muted-foreground">Progression</p>
-          </div>
         </CardHeader>
       </button>
 
       {isExpanded && (
         <CardContent className="pt-0 border-t border-border">
-          <div className="mt-4 space-y-6">
+          <div className="mt-4 space-y-5">
             {(Object.keys(phases) as PhaseType[]).map((phaseType) => (
               <div
                 key={phaseType}
-                className={`p-4 rounded-lg border-2 ${PHASE_BG_COLORS[phaseType]}`}
+                className={`p-4 mt-2 rounded-lg border-2 ${PHASE_BG_COLORS[phaseType]}`}
               >
-                <h3 className="text-lg font-bold mb-4 text-foreground">
-                  {PHASE_LABELS[phaseType]}
-                </h3>
-                <StepList
+                <div className="mb-3">
+                  <h3 className="text-base font-bold text-foreground">
+                    {PHASE_LABELS[phaseType]}
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {PHASE_DESCRIPTIONS[phaseType]}
+                  </p>
+                </div>
+                <TaskList
                   items={phases[phaseType]}
                   followUps={followUps}
-                  expandedStepActivityId={expandedStepActivityId}
-                  onToggleStep={onToggleStep}
+                  expandedTaskActivityId={expandedTaskActivityId}
+                  onToggleTask={onToggleTask}
                   onOpenFollowUp={onOpenFollowUp}
                 />
               </div>

@@ -5,7 +5,7 @@ import { Plus, Save, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Activity, ActivityType } from '@/prisma/app/generated/prisma/browser';
+import { Activity, ActivityType } from '@/app/_types/types';
 
 interface ActivityModalProps {
   title: string;
@@ -25,7 +25,6 @@ export function ActivityModal({
   onSubmit,
 }: ActivityModalProps) {
   const [formData, setFormData] = useState<Partial<Activity>>(initialData);
-
   const isEdit = !!initialData?.id;
 
   return (

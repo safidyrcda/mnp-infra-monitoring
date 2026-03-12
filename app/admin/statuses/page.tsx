@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { Plus, Edit2, Trash2, X, Save, RotateCcw } from 'lucide-react';
 
 interface Status {
@@ -15,11 +14,36 @@ interface Status {
 }
 
 const defaultStatuses: Status[] = [
-  { id: '1', name: 'Non fait', color: '#EF4444', description: 'Activité non commencée' },
-  { id: '2', name: 'En cours', color: '#F59E0B', description: 'Activité en progression' },
-  { id: '3', name: 'Réalisé', color: '#10B981', description: 'Activité terminée' },
-  { id: '4', name: 'Validé', color: '#3B82F6', description: 'Activité validée' },
-  { id: '5', name: 'Bloqué', color: '#8B5CF6', description: 'Activité bloquée' },
+  {
+    id: '1',
+    name: 'Non fait',
+    color: '#EF4444',
+    description: 'Activité non commencée',
+  },
+  {
+    id: '2',
+    name: 'En cours',
+    color: '#F59E0B',
+    description: 'Activité en progression',
+  },
+  {
+    id: '3',
+    name: 'Réalisé',
+    color: '#10B981',
+    description: 'Activité terminée',
+  },
+  {
+    id: '4',
+    name: 'Validé',
+    color: '#3B82F6',
+    description: 'Activité validée',
+  },
+  {
+    id: '5',
+    name: 'Bloqué',
+    color: '#8B5CF6',
+    description: 'Activité bloquée',
+  },
 ];
 
 export default function StatusAdminPage() {
@@ -42,7 +66,9 @@ export default function StatusAdminPage() {
 
   const handleEditStatus = () => {
     if (!editingStatus) return;
-    setStatuses(statuses.map((s) => (s.id === editingStatus.id ? editingStatus : s)));
+    setStatuses(
+      statuses.map((s) => (s.id === editingStatus.id ? editingStatus : s)),
+    );
     setEditingStatus(null);
     setFormData({});
   };
@@ -54,7 +80,9 @@ export default function StatusAdminPage() {
   };
 
   const handleResetToDefaults = () => {
-    if (confirm('Êtes-vous sûr de vouloir réinitialiser les statuts par défaut ?')) {
+    if (
+      confirm('Êtes-vous sûr de vouloir réinitialiser les statuts par défaut ?')
+    ) {
       setStatuses(defaultStatuses);
     }
   };
@@ -63,16 +91,28 @@ export default function StatusAdminPage() {
     <div className="min-h-screen bg-background p-4 md:p-8">
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Gestion des Statuts</h1>
-          <p className="text-muted-foreground">Configurez les statuts disponibles pour toutes les phases d'infrastructures</p>
+          <h1 className="text-3xl font-bold text-foreground mb-2">
+            Gestion des Statuts
+          </h1>
+          <p className="text-muted-foreground">
+            Configurez les statuts disponibles pour toutes les phases
+            d'infrastructures
+          </p>
         </div>
 
         <div className="flex gap-2 mb-6">
-          <Button onClick={() => setShowAddModal(true)} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+          <Button
+            onClick={() => setShowAddModal(true)}
+            className="bg-primary hover:bg-primary/90 text-primary-foreground"
+          >
             <Plus className="w-4 h-4 mr-2" />
             Ajouter un statut
           </Button>
-          <Button onClick={handleResetToDefaults} variant="outline" className="border-border">
+          <Button
+            onClick={handleResetToDefaults}
+            variant="outline"
+            className="border-border"
+          >
             <RotateCcw className="w-4 h-4 mr-2" />
             Réinitialiser
           </Button>
@@ -89,8 +129,12 @@ export default function StatusAdminPage() {
                       style={{ backgroundColor: status.color }}
                     />
                     <div>
-                      <h3 className="font-semibold text-foreground">{status.name}</h3>
-                      <p className="text-sm text-muted-foreground">{status.description}</p>
+                      <h3 className="font-semibold text-foreground">
+                        {status.name}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        {status.description}
+                      </p>
                     </div>
                   </div>
                   <div className="flex gap-2">
@@ -124,7 +168,9 @@ export default function StatusAdminPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <Card className="w-full max-w-md border-border">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-              <CardTitle>{editingStatus ? 'Éditer le statut' : 'Ajouter un statut'}</CardTitle>
+              <CardTitle>
+                {editingStatus ? 'Éditer le statut' : 'Ajouter un statut'}
+              </CardTitle>
               <button
                 onClick={() => {
                   setShowAddModal(false);
@@ -138,12 +184,17 @@ export default function StatusAdminPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <label className="text-sm font-medium text-foreground">Nom du statut</label>
+                <label className="text-sm font-medium text-foreground">
+                  Nom du statut
+                </label>
                 <Input
                   value={editingStatus?.name || formData.name || ''}
                   onChange={(e) => {
                     if (editingStatus) {
-                      setEditingStatus({ ...editingStatus, name: e.target.value });
+                      setEditingStatus({
+                        ...editingStatus,
+                        name: e.target.value,
+                      });
                     } else {
                       setFormData({ ...formData, name: e.target.value });
                     }
@@ -153,30 +204,44 @@ export default function StatusAdminPage() {
                 />
               </div>
               <div>
-                <label className="text-sm font-medium text-foreground">Couleur</label>
+                <label className="text-sm font-medium text-foreground">
+                  Couleur
+                </label>
                 <div className="mt-1 flex gap-2 items-center">
                   <input
                     type="color"
                     value={editingStatus?.color || formData.color || '#3B82F6'}
                     onChange={(e) => {
                       if (editingStatus) {
-                        setEditingStatus({ ...editingStatus, color: e.target.value });
+                        setEditingStatus({
+                          ...editingStatus,
+                          color: e.target.value,
+                        });
                       } else {
                         setFormData({ ...formData, color: e.target.value });
                       }
                     }}
                     className="w-12 h-10 rounded cursor-pointer"
                   />
-                  <code className="text-sm text-muted-foreground">{editingStatus?.color || formData.color}</code>
+                  <code className="text-sm text-muted-foreground">
+                    {editingStatus?.color || formData.color}
+                  </code>
                 </div>
               </div>
               <div>
-                <label className="text-sm font-medium text-foreground">Description</label>
+                <label className="text-sm font-medium text-foreground">
+                  Description
+                </label>
                 <textarea
-                  value={editingStatus?.description || formData.description || ''}
+                  value={
+                    editingStatus?.description || formData.description || ''
+                  }
                   onChange={(e) => {
                     if (editingStatus) {
-                      setEditingStatus({ ...editingStatus, description: e.target.value });
+                      setEditingStatus({
+                        ...editingStatus,
+                        description: e.target.value,
+                      });
                     } else {
                       setFormData({ ...formData, description: e.target.value });
                     }
