@@ -20,7 +20,11 @@ interface FollowUpModalProps {
   onSubmit: (data: Partial<TaskActivityFollowUp>) => void;
 }
 
-export function FollowUpModal({ taskName, onClose, onSubmit }: FollowUpModalProps) {
+export function FollowUpModal({
+  taskName,
+  onClose,
+  onSubmit,
+}: FollowUpModalProps) {
   const [formData, setFormData] = useState<Partial<TaskActivityFollowUp>>({});
   const [hasProblem, setHasProblem] = useState(false);
 
@@ -29,38 +33,53 @@ export function FollowUpModal({ taskName, onClose, onSubmit }: FollowUpModalProp
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-      <Card className="w-full max-w-lg border-border my-4">
+      <Card className="w-[800px] max-w-lg border-border">
         <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-4">
           <div>
             <CardTitle>Ajouter un suivi</CardTitle>
-            <p className="text-sm text-muted-foreground mt-1 font-medium">{taskName}</p>
+            <p className="text-sm text-muted-foreground mt-1 font-medium">
+              {taskName}
+            </p>
           </div>
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground mt-1">
+          <button
+            onClick={onClose}
+            className="text-muted-foreground hover:text-foreground mt-1"
+          >
             <X className="w-5 h-5" />
           </button>
         </CardHeader>
 
-        <CardContent className="space-y-4">
+        <CardContent className="">
           {/* Statut */}
           <div>
-            <label className="text-sm font-medium text-foreground">Statut</label>
+            <label className="text-sm font-medium text-foreground">
+              Statut
+            </label>
             <select
               value={formData.status ?? ''}
               onChange={(e) =>
-                set({ status: e.target.value ? (e.target.value as Status) : undefined })
+                set({
+                  status: e.target.value
+                    ? (e.target.value as Status)
+                    : undefined,
+                })
               }
               className="w-full mt-1 p-2 border border-border rounded-md bg-card text-foreground"
             >
               <option value="">— Inchangé —</option>
               {Object.values(Status).map((s) => (
-                <option key={s} value={s}>{STATUS_LABELS[s]}</option>
+                <option key={s} value={s}>
+                  {STATUS_LABELS[s]}
+                </option>
               ))}
             </select>
           </div>
 
           {/* Commentaire */}
           <div>
-            <label className="text-sm font-medium text-foreground">Commentaire</label>
+            <label className="text-sm font-medium text-foreground">
+              Commentaire
+            </label>
             <textarea
               value={formData.commentaire ?? ''}
               onChange={(e) => set({ commentaire: e.target.value })}
@@ -71,16 +90,17 @@ export function FollowUpModal({ taskName, onClose, onSubmit }: FollowUpModalProp
 
           {/* Problème */}
           <div className="border-t border-border pt-4">
-            <button
-              type="button"
+            <Button
               onClick={() => setHasProblem((v) => !v)}
               className={`flex items-center gap-2 text-sm font-medium transition-colors ${
-                hasProblem ? 'text-destructive' : 'text-muted-foreground hover:text-foreground'
+                hasProblem ? '' : ''
               }`}
             >
               <AlertTriangle className="w-4 h-4" />
-              {hasProblem ? 'Problème signalé' : 'Signaler un problème (optionnel)'}
-            </button>
+              {hasProblem
+                ? 'Problème signalé'
+                : 'Signaler un problème (optionnel)'}
+            </Button>
 
             {hasProblem && (
               <div className="mt-3 space-y-3">
@@ -91,7 +111,9 @@ export function FollowUpModal({ taskName, onClose, onSubmit }: FollowUpModalProp
                   </label>
                   <textarea
                     value={formData.problemDescription ?? ''}
-                    onChange={(e) => set({ problemDescription: e.target.value })}
+                    onChange={(e) =>
+                      set({ problemDescription: e.target.value })
+                    }
                     placeholder="Décrivez le problème ou blocage rencontré..."
                     className="mt-1 w-full p-2 border border-destructive/40 rounded-md bg-card text-foreground min-h-[60px] resize-none"
                   />
@@ -140,7 +162,9 @@ export function FollowUpModal({ taskName, onClose, onSubmit }: FollowUpModalProp
           </div>
 
           <div className="flex gap-2 justify-end pt-1">
-            <Button variant="outline" onClick={onClose}>Annuler</Button>
+            <Button variant="outline" onClick={onClose}>
+              Annuler
+            </Button>
             <Button
               onClick={() => onSubmit(formData)}
               className="bg-primary hover:bg-primary/90 text-primary-foreground"

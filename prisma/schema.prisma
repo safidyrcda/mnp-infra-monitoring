@@ -52,11 +52,9 @@ model Activity {
   name      String
   site      String
   type      ActivityType
-
   phases         Phase[]
   taskActivities TaskActivity[]
   userActivities UserActivity[]
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -67,12 +65,9 @@ model Phase {
   order      Int
   activityId String
   activity   Activity  @relation(fields: [activityId], references: [id], onDelete: Cascade)
-
   startDate DateTime?
   endDate   DateTime?
-
   tasks Task[]
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -83,10 +78,8 @@ model Task {
   phaseType PhaseType
   order     Int
   valueType TaskValueType
-
   taskActivities TaskActivity[]
   phases         Phase[]
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -95,22 +88,16 @@ model TaskActivity {
   id         String @id @default(uuid())
   activityId String
   taskId     String
-
   status      Status  @default(NON_FAIT)
   isApplicable Boolean @default(true)
-
-  // Valeur selon le TaskValueType de la Task
   valueString String?   // DOCUMENT : référence du document
   valueNumber Float?    // PERCENTAGE : 0-100
   valueDate   DateTime? // DATE : date cible ou réelle
-
   commentaire String?
   dueDate     DateTime?
-
   activity  Activity  @relation(fields: [activityId], references: [id], onDelete: Cascade)
   task      Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
   followUps TaskActivityFollowUp[]
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -120,31 +107,21 @@ model TaskActivity {
 model TaskActivityFollowUp {
   id             String @id @default(uuid())
   taskActivityId String
-
-  // Avancement
   status      Status?
   valueString String?
   valueNumber Float?
   valueDate   DateTime?
-
-  // Suivi narratif
   commentaire String?
-
-  // Gestion des problèmes
   problemDescription String?   // Description du problème rencontré
   proposedSolution   String?   // Solution proposée
   nextAction         String?   // Suite à donner / action planifiée
-
   fichierJoint String?
-
   createdById   String?
   createdBy     User?   @relation("createdBy", fields: [createdById], references: [id])
   validatedById String?
   validatedBy   User?   @relation("validatedBy", fields: [validatedById], references: [id])
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
   taskActivity TaskActivity @relation(fields: [taskActivityId], references: [id], onDelete: Cascade)
 }
 
@@ -154,11 +131,9 @@ model User {
   name     String?
   password String
   role     String
-
   userActivities             UserActivity[]
   taskActivityFollowUpsCreated   TaskActivityFollowUp[] @relation("createdBy")
   taskActivityFollowUpsValidated TaskActivityFollowUp[] @relation("validatedBy")
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -168,12 +143,9 @@ model UserActivity {
   userId     String
   activityId String
   role       UserActivityRole
-
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   activity Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
   @@unique([userId, activityId])
 }

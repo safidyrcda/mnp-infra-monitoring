@@ -11,7 +11,6 @@ import {
   Pencil,
   Calendar,
 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { FollowUpsMap } from './InfrastructureTracker';
 import { TaskActivityFollowUp, TaskValueType, Status } from '../_types/types';
@@ -142,11 +141,11 @@ export function TaskList({
 
             {/* Historique des suivis */}
             {isExpanded && (
-              <div className="border-t border-border px-3 pb-3 pt-2 space-y-2">
+              <div className="border-t border-border px-3 pb-3 pt-2 space-y-2 p-3">
                 {taskFollowUps.map((followUp) => (
                   <div
                     key={followUp.id}
-                    className="rounded border border-border bg-muted/30 p-2.5 space-y-1.5"
+                    className="rounded border border-border bg-muted/30 p-2.5 space-y-1.5 p-4"
                   >
                     {/* En-tête du suivi : statut + date */}
                     <div className="flex items-center justify-between gap-2">
