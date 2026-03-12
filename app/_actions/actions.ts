@@ -2,13 +2,10 @@
 
 import { prisma } from '@/lib/db-connect';
 import {
-  PrismaClient,
   Status,
-  PhaseType,
   ActivityType,
-  Etape,
-  EtapeActivity,
-  EtapeActivityFollowUp,
+  StepActivity,
+  StepActivityFollowUp,
 } from '@/prisma/app/generated/prisma/client';
 
 // ---------------------------
@@ -18,10 +15,8 @@ import {
 export async function getAllActivities() {
   return prisma.activity.findMany({
     include: {
-      etapeActivities: {
-        include: {
-          etape: true,
-        },
+      stepActivities: {
+        include: { step: true },
       },
     },
   });
@@ -31,60 +26,14 @@ export async function getActivityById(activityId: string) {
   return prisma.activity.findUnique({
     where: { id: activityId },
     include: {
-      etapeActivities: {
-        include: { etape: true },
+      stepActivities: {
+        include: { step: true },
       },
     },
   });
 }
 
-// ---------------------------
-// ETAPE
-// ---------------------------
-
-export async function getAllEtapes(): Promise<Etape[]> {
-  return prisma.etape.findMany({});
-}
-
-export async function getEtapeById(etapeId: string) {
-  return prisma.etape.findUnique({
-    where: { id: etapeId },
-    include: {
-      etapeActivities: true,
-    },
-  });
-}
-
-// ---------------------------
-// ETAPE ACTIVITY
-// ---------------------------
-
-export async function getAllEtapeActivities() {
-  return prisma.etapeActivity.findMany({
-    include: { etape: true, activity: true },
-  });
-}
-
-export async function getEtapeActivitiesByActivity(activityId: string) {
-  return prisma.etapeActivity.findMany({
-    where: { activityId },
-    include: { etape: true },
-  });
-}
-
-export async function getEtapeActivitiesByEtape(etapeId: string) {
-  return prisma.etapeActivity.findMany({
-    where: { etapeId },
-    include: { activity: true },
-  });
-}
-
-// ---------------------------
-// CREATE / UPDATE / DELETE EXAMPLES
-// ---------------------------
-
 export async function createActivity(data: {
-  id?: string;
   name: string;
   site: string;
   type: ActivityType;
@@ -96,58 +45,100 @@ export async function updateActivity(
   id: string,
   data: Partial<{ name: string; site: string; type: ActivityType }>,
 ) {
-  return prisma.activity.update({
-    where: { id },
-    data,
-  });
+  return prisma.activity.update({ where: { id }, data });
 }
 
 export async function deleteActivity(id: string) {
-  return prisma.activity.delete({
-    where: { id },
+  return prisma.activity.delete({ where: { id } });
+}
+
+// ---------------------------
+// STEP
+// ---------------------------
+
+export async function getAllSteps() {
+  return prisma.step.findMany();
+}
+
+export async function getStepById(stepId: string) {
+  return prisma.step.findUnique({
+    where: { id: stepId },
+    include: { stepActivities: true },
   });
 }
 
-export async function createEtapeActivity(data: {
-  id?: string;
+// ---------------------------
+// STEP ACTIVITY
+// ---------------------------
+
+export async function getAllStepActivities() {
+  return prisma.stepActivity.findMany({
+    include: { step: true, activity: true },
+  });
+}
+
+export async function getStepActivitiesByActivity(activityId: string) {
+  return prisma.stepActivity.findMany({
+    where: { activityId },
+    include: { step: true },
+  });
+}
+
+export async function getStepActivitiesByStep(stepId: string) {
+  return prisma.stepActivity.findMany({
+    where: { stepId },
+    include: { activity: true },
+  });
+}
+
+export async function createStepActivity(data: {
   activityId: string;
-  etapeId: string;
+  stepId: string;
   status?: Status;
   commentaire?: string;
-  fichierJoint?: string;
-  date?: Date;
+  dueDate?: Date;
 }) {
-  return prisma.etapeActivity.create({
-    data,
-  });
+  return prisma.stepActivity.create({ data });
 }
 
-export async function updateEtapeActivity(
+export async function updateStepActivity(
   id: string,
-  data: Partial<EtapeActivity>,
+  data: Partial<Omit<StepActivity, 'id' | 'createdAt' | 'updatedAt'>>,
 ) {
-  return prisma.etapeActivity.update({
-    where: { id },
-    data,
-  });
+  return prisma.stepActivity.update({ where: { id }, data });
 }
 
-export async function deleteEtapeActivity(id: string) {
-  return prisma.etapeActivity.delete({
-    where: { id },
-  });
+export async function deleteStepActivity(id: string) {
+  return prisma.stepActivity.delete({ where: { id } });
 }
 
-export async function getEtapeActivityFollowUpsByEtapeActivityId(id: string) {
-  return prisma.etapeActivityFollowUp.findMany({
-    where: { etapeActivityId: id },
-  });
-}
-
-export async function createEtapeActivityFollowUp(data: EtapeActivityFollowUp) {
-  return prisma.etapeActivityFollowUp.create({ data });
-}
+// ---------------------------
+// STEP ACTIVITY FOLLOW UP
+// ---------------------------
 
 export async function getAllFollowUps() {
-  return prisma.etapeActivityFollowUp.findMany();
+  return prisma.stepActivityFollowUp.findMany();
+}
+
+export async function getFollowUpsByStepActivity(stepActivityId: string) {
+  return prisma.stepActivityFollowUp.findMany({
+    where: { stepActivityId },
+  });
+}
+
+export async function createStepActivityFollowUp(
+  data: Omit<StepActivityFollowUp, 'id' | 'createdAt' | 'updatedAt'>,
+) {
+  return prisma.stepActivityFollowUp.create({ data });
+}
+
+export async function updateStepActivityFollowUp(
+  id: string,
+  data: Partial<Omit<StepActivityFollowUp, 'id' | 'createdAt' | 'updatedAt'>>,
+) {
+  return prisma.stepActivityFollowUp.update({ where: { id }, data });
+}
+
+export async function deleteStepActivityFollowUp(id: string) {
+  return prisma.stepActivityFollowUp.delete({ where: { id } });
 }

@@ -4,14 +4,11 @@ import { ChevronDown, Edit2, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  Activity,
-  EtapeActivityFollowUp,
-} from '@/prisma/app/generated/prisma/client';
 
 import { PhasesMap, PHASE_LABELS, PHASE_BG_COLORS, PhaseType } from './utils';
 import { FollowUpsMap } from './InfrastructureTracker';
-import { EtapeList } from './EtapeList';
+import { StepList } from './StepList';
+import { Activity } from '@/prisma/app/generated/prisma/browser';
 
 interface ActivityCardProps {
   activity: Activity;
@@ -19,9 +16,9 @@ interface ActivityCardProps {
   onToggle: () => void;
   phases: PhasesMap;
   followUps: FollowUpsMap;
-  expandedEtapeActivityId: string | null;
-  onToggleEtape: (id: string) => void;
-  onOpenFollowUp: (etapeActivityId: string) => void;
+  expandedStepActivityId: string | null;
+  onToggleStep: (id: string) => void;
+  onOpenFollowUp: (stepActivityId: string) => void;
   onEdit: () => void;
   onDelete: () => void;
 }
@@ -32,8 +29,8 @@ export function ActivityCard({
   onToggle,
   phases,
   followUps,
-  expandedEtapeActivityId,
-  onToggleEtape,
+  expandedStepActivityId,
+  onToggleStep,
   onOpenFollowUp,
   onEdit,
   onDelete,
@@ -78,11 +75,11 @@ export function ActivityCard({
                 <h3 className="text-lg font-bold mb-4 text-foreground">
                   {PHASE_LABELS[phaseType]}
                 </h3>
-                <EtapeList
+                <StepList
                   items={phases[phaseType]}
                   followUps={followUps}
-                  expandedEtapeActivityId={expandedEtapeActivityId}
-                  onToggleEtape={onToggleEtape}
+                  expandedStepActivityId={expandedStepActivityId}
+                  onToggleStep={onToggleStep}
                   onOpenFollowUp={onOpenFollowUp}
                 />
               </div>

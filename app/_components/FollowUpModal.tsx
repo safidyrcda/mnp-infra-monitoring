@@ -5,15 +5,18 @@ import { Plus, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { EtapeActivityFollowUp } from '@/prisma/app/generated/prisma/client';
+import {
+  Status,
+  StepActivityFollowUp,
+} from '@/prisma/app/generated/prisma/browser';
 
 interface FollowUpModalProps {
   onClose: () => void;
-  onSubmit: (data: Partial<EtapeActivityFollowUp>) => void;
+  onSubmit: (data: Partial<StepActivityFollowUp>) => void;
 }
 
 export function FollowUpModal({ onClose, onSubmit }: FollowUpModalProps) {
-  const [formData, setFormData] = useState<Partial<EtapeActivityFollowUp>>({});
+  const [formData, setFormData] = useState<Partial<StepActivityFollowUp>>({});
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -34,7 +37,7 @@ export function FollowUpModal({ onClose, onSubmit }: FollowUpModalProps) {
               Commentaire
             </label>
             <textarea
-              value={formData.commentaire || ''}
+              value={formData.commentaire ?? ''}
               onChange={(e) =>
                 setFormData({ ...formData, commentaire: e.target.value })
               }
@@ -48,19 +51,17 @@ export function FollowUpModal({ onClose, onSubmit }: FollowUpModalProps) {
               Statut
             </label>
             <select
-              value={formData.status || 'EN_COURS'}
+              value={formData.status ?? Status.EN_COURS}
               onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  status: e.target.value as EtapeActivityFollowUp['status'],
-                })
+                setFormData({ ...formData, status: e.target.value as Status })
               }
               className="w-full mt-1 p-2 border border-border rounded-md bg-card text-foreground"
             >
-              <option value="NON_FAIT">Non fait</option>
-              <option value="EN_COURS">En cours</option>
-              <option value="REALISE">Réalisé</option>
-              <option value="VALIDE">Validé</option>
+              {Object.values(Status).map((s) => (
+                <option key={s} value={s}>
+                  {STATUS_LABELS[s]}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -69,12 +70,15 @@ export function FollowUpModal({ onClose, onSubmit }: FollowUpModalProps) {
             <input
               type="date"
               value={
-                formData.date
-                  ? new Date(formData.date).toISOString().split('T')[0]
+                formData.valueDate
+                  ? new Date(formData.valueDate).toISOString().split('T')[0]
                   : ''
               }
               onChange={(e) =>
-                setFormData({ ...formData, date: new Date(e.target.value) })
+                setFormData({
+                  ...formData,
+                  valueDate: new Date(e.target.value),
+                })
               }
               className="w-full mt-1 p-2 border border-border rounded-md bg-card text-foreground"
             />
@@ -85,7 +89,7 @@ export function FollowUpModal({ onClose, onSubmit }: FollowUpModalProps) {
               Fichier joint (optionnel)
             </label>
             <Input
-              value={formData.fichierJoint || ''}
+              value={formData.fichierJoint ?? ''}
               onChange={(e) =>
                 setFormData({ ...formData, fichierJoint: e.target.value })
               }
@@ -111,3 +115,10 @@ export function FollowUpModal({ onClose, onSubmit }: FollowUpModalProps) {
     </div>
   );
 }
+
+const STATUS_LABELS: Record<Status, string> = {
+  NON_FAIT: 'Non fait',
+  EN_COURS: 'En cours',
+  REALISE: 'Réalisé',
+  VALIDE: 'Validé',
+};

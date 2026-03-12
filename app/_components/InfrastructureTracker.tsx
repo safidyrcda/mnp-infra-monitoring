@@ -5,37 +5,35 @@ import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
-
 import {
-  createEtapeActivityFollowUp,
+  createStepActivityFollowUp,
   getAllActivities,
-  getAllEtapes,
+  getAllSteps,
   getAllFollowUps,
-  getEtapeActivitiesByActivity,
+  getStepActivitiesByActivity,
 } from '@/app/_actions/actions';
-import {
-  Activity,
-  Etape,
-  EtapeActivity,
-  EtapeActivityFollowUp,
-} from '@/prisma/app/generated/prisma/client';
-
 import { ActivityCard } from './ActivityCard';
 import { ActivityModal } from './ActivityModal';
 import { FollowUpModal } from './FollowUpModal';
-import { groupEtapesByPhase } from './utils';
+import { groupStepsByPhase } from './utils';
+import {
+  Activity,
+  Step,
+  StepActivity,
+  StepActivityFollowUp,
+} from '@/prisma/app/generated/prisma/browser';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-export type FollowUpsMap = Map<string, EtapeActivityFollowUp[]>;
+export type FollowUpsMap = Map<string, StepActivityFollowUp[]>;
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function InfrastructureTracker() {
   // Data state
   const [activities, setActivities] = useState<Activity[]>([]);
-  const [etapes, setEtapes] = useState<Etape[]>([]);
-  const [etapeActivities, setEtapeActivities] = useState<EtapeActivity[]>([]);
+  const [steps, setSteps] = useState<Step[]>([]);
+  const [stepActivities, setStepActivities] = useState<StepActivity[]>([]);
   const [followUps, setFollowUps] = useState<FollowUpsMap>(new Map());
 
   // UI state
@@ -44,7 +42,7 @@ export function InfrastructureTracker() {
   const [expandedActivityId, setExpandedActivityId] = useState<string | null>(
     null,
   );
-  const [expandedEtapeActivityId, setExpandedEtapeActivityId] = useState<
+  const [expandedStepActivityId, setExpandedStepActivityId] = useState<
     string | null
   >(null);
 
@@ -53,19 +51,19 @@ export function InfrastructureTracker() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
   const [showFollowUpModal, setShowFollowUpModal] = useState(false);
-  const [selectedEtapeActivityId, setSelectedEtapeActivityId] = useState<
+  const [selectedStepActivityId, setSelectedStepActivityId] = useState<
     string | null
   >(null);
 
   // ─── Data fetching ──────────────────────────────────────────────────────────
 
   useEffect(() => {
-    getAllEtapes().then(setEtapes);
+    getAllSteps().then(setSteps);
     getAllActivities().then(setActivities);
     getAllFollowUps().then((data) => {
-      const map = new Map<string, EtapeActivityFollowUp[]>();
+      const map = new Map<string, StepActivityFollowUp[]>();
       data.forEach((f) => {
-        map.set(f.etapeActivityId, [...(map.get(f.etapeActivityId) ?? []), f]);
+        map.set(f.stepActivityId, [...(map.get(f.stepActivityId) ?? []), f]);
       });
       setFollowUps(map);
     });
@@ -73,7 +71,7 @@ export function InfrastructureTracker() {
 
   useEffect(() => {
     if (!expandedActivityId) return;
-    getEtapeActivitiesByActivity(expandedActivityId).then(setEtapeActivities);
+    getStepActivitiesByActivity(expandedActivityId).then(setStepActivities);
   }, [expandedActivityId]);
 
   // ─── Derived state ──────────────────────────────────────────────────────────
@@ -97,8 +95,8 @@ export function InfrastructureTracker() {
   );
 
   const phases = useMemo(
-    () => groupEtapesByPhase(etapeActivities, etapes),
-    [etapeActivities, etapes],
+    () => groupStepsByPhase(stepActivities, steps),
+    [stepActivities, steps],
   );
 
   // ─── Handlers ───────────────────────────────────────────────────────────────
@@ -128,40 +126,43 @@ export function InfrastructureTracker() {
     setActivities((prev) => prev.filter((a) => a.id !== id));
   };
 
-  const handleAddFollowUp = async (data: Partial<EtapeActivityFollowUp>) => {
-    if (!selectedEtapeActivityId) return;
-    const newFollowUp: EtapeActivityFollowUp = {
+  const handleAddFollowUp = async (data: Partial<StepActivityFollowUp>) => {
+    if (!selectedStepActivityId) return;
+    const newFollowUp: StepActivityFollowUp = {
       id: Date.now().toString(),
-      etapeActivityId: selectedEtapeActivityId,
-      commentaire: data.commentaire || '',
-      date: data.date || new Date(),
-      status: data.status || 'EN_COURS',
-      fichierJoint: data.fichierJoint || null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      stepActivityId: selectedStepActivityId,
+      commentaire: data.commentaire ?? null,
+      status: data.status ?? null,
+      valueString: data.valueString ?? null,
+      valueNumber: data.valueNumber ?? null,
+      valueDate: data.valueDate ?? null,
+      fichierJoint: data.fichierJoint ?? null,
       createdById: null,
       validatedById: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
 
-    await createEtapeActivityFollowUp(newFollowUp);
+    await createStepActivityFollowUp(newFollowUp);
+
     setFollowUps((prev) => {
       const updated = new Map(prev);
-      updated.set(selectedEtapeActivityId, [
-        ...(updated.get(selectedEtapeActivityId) || []),
+      updated.set(selectedStepActivityId, [
+        ...(updated.get(selectedStepActivityId) ?? []),
         newFollowUp,
       ]);
       return updated;
     });
     setShowFollowUpModal(false);
-    setSelectedEtapeActivityId(null);
+    setSelectedStepActivityId(null);
   };
 
   const handleToggleActivity = (id: string) => {
     setExpandedActivityId((prev) => (prev === id ? null : id));
   };
 
-  const handleOpenFollowUp = (etapeActivityId: string) => {
-    setSelectedEtapeActivityId(etapeActivityId);
+  const handleOpenFollowUp = (stepActivityId: string) => {
+    setSelectedStepActivityId(stepActivityId);
     setShowFollowUpModal(true);
   };
 
@@ -236,11 +237,9 @@ export function InfrastructureTracker() {
                 onToggle={() => handleToggleActivity(activity.id)}
                 phases={phases}
                 followUps={followUps}
-                expandedEtapeActivityId={expandedEtapeActivityId}
-                onToggleEtape={(id) =>
-                  setExpandedEtapeActivityId((prev) =>
-                    prev === id ? null : id,
-                  )
+                expandedStepActivityId={expandedStepActivityId}
+                onToggleStep={(id) =>
+                  setExpandedStepActivityId((prev) => (prev === id ? null : id))
                 }
                 onOpenFollowUp={handleOpenFollowUp}
                 onEdit={() => {
@@ -284,7 +283,7 @@ export function InfrastructureTracker() {
         <FollowUpModal
           onClose={() => {
             setShowFollowUpModal(false);
-            setSelectedEtapeActivityId(null);
+            setSelectedStepActivityId(null);
           }}
           onSubmit={handleAddFollowUp}
         />

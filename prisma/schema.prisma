@@ -32,28 +32,18 @@ enum ActivityType {
   ADMIN
 }
 
-model EtapeActivity {
-  id          String  @id @default(uuid())
-  activityId  String
-  etapeId     String
-  status      Status?
-  commentaire String?
-  isApplicable Boolean  @default(true)
-  dueDate      DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  activity Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
-  etape    Etape    @relation(fields: [etapeId], references: [id], onDelete: Cascade)
-  followUps EtapeActivityFollowUp[]
-
-  @@unique([activityId, etapeId])
+enum StepValueType {
+  DATE
+  PERCENTAGE
+  TEXT
+  BOOLEAN
+  STATUS
 }
 
-model Etape {
-  id        String    @id @default(uuid())
-  nom       String
-  phaseType PhaseType?
-  etapeActivities EtapeActivity[]
+enum UserActivityRole {
+  RESPONSABLE
+  VALIDATEUR
+  OBSERVATEUR
 }
 
 model Activity {
@@ -61,57 +51,138 @@ model Activity {
   name      String
   site      String
   type      ActivityType
-  etapeActivities EtapeActivity[]
-  createdAt DateTime? @default(now())
-  updatedAt DateTime? @updatedAt
-  preparationStartDate DateTime?
-  preparationEndDate DateTime?
-  passationStartDate DateTime?
-  passationEndDate DateTime?
-  contractualizationStartDate DateTime?
-  contractualizationEndDate DateTime? 
-  executionStartDate DateTime?
-  executionEndDate DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  phases Phase[]
   userActivities UserActivity[]
+
+  stepActivities StepActivity[]
 }
 
-model EtapeActivityFollowUp {
-  id              String   @id @default(uuid())
-  etapeActivityId String
-  commentaire     String
-  date            DateTime?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  status          Status?
-  fichierJoint    String?
-  createdById     String?
-  createdBy       User? @relation("createdBy", fields: [createdById], references: [id], onDelete: SetNull)
-  validatedById   String?
-  validatedBy     User? @relation("validatedBy", fields: [validatedById], references: [id], onDelete: SetNull)
-  etapeActivity   EtapeActivity @relation(fields: [etapeActivityId], references: [id], onDelete: Cascade)
+model Phase {
+  id        String    @id @default(uuid())
+  type      PhaseType
+  order     Int
+
+  activityId String
+  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+
+  startDate DateTime?
+  endDate   DateTime?
+
+  steps Step[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Step {
+  id        String @id @default(uuid())
+
+  name      String
+  phaseType PhaseType
+
+  order     Int
+  valueType StepValueType
+
+  stepActivities StepActivity[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  phases Phase[]
+}
+
+model StepActivity {
+  id String @id @default(uuid())
+
+  activityId String
+  stepId     String
+
+  status Status @default(NON_FAIT)
+
+  valueString  String?
+  valueNumber  Float?
+  valueDate    DateTime?
+  valueBoolean Boolean?
+
+  commentaire String?
+
+  isApplicable Boolean @default(true)
+
+  dueDate DateTime?
+
+  activity Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  step     Step     @relation(fields: [stepId], references: [id], onDelete: Cascade)
+
+  followUps StepActivityFollowUp[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([activityId, stepId])
+}
+
+model StepActivityFollowUp {
+  id String @id @default(uuid())
+
+  stepActivityId String
+
+  commentaire String?
+  status Status?
+
+  valueString  String?
+  valueNumber  Float?
+  valueDate    DateTime?
+
+  fichierJoint String?
+
+  createdById String?
+  createdBy   User? @relation("createdBy", fields: [createdById], references: [id])
+
+  validatedById String?
+  validatedBy   User? @relation("validatedBy", fields: [validatedById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  stepActivity StepActivity @relation(fields: [stepActivityId], references: [id], onDelete: Cascade)
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  name      String?
+  id String @id @default(uuid())
+
+  email String @unique
+  name  String?
+
+  password String
+
+  role String
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  password  String
-  role     String
+
   userActivities UserActivity[]
-  etapeActivityFollowUpsCreated EtapeActivityFollowUp[] @relation("createdBy")
-  etapeActivityFollowUpsValidated EtapeActivityFollowUp[] @relation("validatedBy")
+
+  stepActivityFollowUpsCreated StepActivityFollowUp[] @relation("createdBy")
+  stepActivityFollowUpsValidated StepActivityFollowUp[] @relation("validatedBy")
 }
 
 model UserActivity {
-  id         String   @id @default(uuid())
+  id String @id @default(uuid())
+
   userId     String
   activityId String
-  role       String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+
+  role UserActivityRole
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activity Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@unique([userId, activityId])
 }

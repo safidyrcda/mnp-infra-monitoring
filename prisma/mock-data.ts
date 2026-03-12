@@ -1,4 +1,4 @@
-import { Activity, Etape, EtapeActivity } from './app/generated/prisma/client';
+import { Activity, Step, StepValueType } from './app/generated/prisma/client';
 
 export const mockActivities: Partial<Activity>[] = [
   {
@@ -31,40 +31,86 @@ export const mockActivities: Partial<Activity>[] = [
   },
 ];
 
-export const mockEtapes: Partial<Etape>[] = [
-  { nom: 'Date prévue dans PPM', phaseType: 'preparation' },
+export const mockSteps: Partial<Step>[] = [
+  // ── Préparation ────────────────────────────────────────────────
   {
-    nom: 'Type du document (APD/DEVIS/DAOR/DAON)',
+    name: 'Date prévue dans PPM',
     phaseType: 'preparation',
+    order: 1,
+    valueType: 'DATE',
   },
-  { nom: 'DAS', phaseType: 'preparation' },
-  { nom: 'APD', phaseType: 'preparation' },
-  { nom: 'Réalisation du document %', phaseType: 'preparation' },
   {
-    nom: 'Échéance pour la phase de préparation',
+    name: 'Type du document (APD/DEVIS/DAOR/DAON)',
     phaseType: 'preparation',
+    order: 2,
+    valueType: 'TEXT',
+  },
+  { name: 'DAS', phaseType: 'preparation', order: 3, valueType: 'STATUS' },
+  { name: 'APD', phaseType: 'preparation', order: 4, valueType: 'STATUS' },
+  {
+    name: 'Réalisation du document %',
+    phaseType: 'preparation',
+    order: 5,
+    valueType: 'PERCENTAGE',
+  },
+  {
+    name: 'Échéance pour la phase de préparation',
+    phaseType: 'preparation',
+    order: 6,
+    valueType: 'DATE',
   },
 
+  // ── Passation ──────────────────────────────────────────────────
   {
-    nom: 'Échéance pour la phase de passation',
+    name: 'Échéance pour la phase de passation',
     phaseType: 'passation',
+    order: 1,
+    valueType: 'DATE',
   },
   {
-    nom: 'Prospection des fournisseurs',
+    name: 'Prospection des fournisseurs',
     phaseType: 'passation',
-  },
-  { nom: 'Publication', phaseType: 'passation' },
-
-  {
-    nom: 'Signature du contrat',
-    phaseType: 'contractualization',
+    order: 2,
+    valueType: 'STATUS',
   },
   {
-    nom: 'Notification du marché',
-    phaseType: 'contractualization',
+    name: 'Publication',
+    phaseType: 'passation',
+    order: 3,
+    valueType: 'STATUS',
   },
 
-  { nom: 'Démarrage des travaux', phaseType: 'execution' },
-  { nom: 'Avancement des travaux', phaseType: 'execution' },
-  { nom: 'Réception provisoire', phaseType: 'execution' },
+  // ── Contractualisation ─────────────────────────────────────────
+  {
+    name: 'Signature du contrat',
+    phaseType: 'contractualization',
+    order: 1,
+    valueType: 'DATE',
+  },
+  {
+    name: 'Notification du marché',
+    phaseType: 'contractualization',
+    order: 2,
+    valueType: 'DATE',
+  },
+
+  // ── Exécution ──────────────────────────────────────────────────
+  {
+    name: 'Démarrage des travaux',
+    phaseType: 'execution',
+    order: 1,
+    valueType: 'DATE',
+  },
+  {
+    name: 'Avancement des travaux',
+    phaseType: 'execution',
+    order: 2,
+    valueType: 'PERCENTAGE',
+  },
+  {
+    name: 'Réception provisoire',
+    phaseType: 'execution',
+    order: 3,
+    valueType: 'DATE',
+  },
 ];

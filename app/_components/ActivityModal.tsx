@@ -5,7 +5,7 @@ import { Plus, Save, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Activity } from '@/prisma/app/generated/prisma/client';
+import { Activity, ActivityType } from '@/prisma/app/generated/prisma/browser';
 
 interface ActivityModalProps {
   title: string;
@@ -47,7 +47,7 @@ export function ActivityModal({
               Nom de l'activité
             </label>
             <Input
-              value={formData.name || ''}
+              value={formData.name ?? ''}
               onChange={(e) =>
                 setFormData({ ...formData, name: e.target.value })
               }
@@ -59,7 +59,7 @@ export function ActivityModal({
           <div>
             <label className="text-sm font-medium text-foreground">Site</label>
             <select
-              value={formData.site || sites[0] || ''}
+              value={formData.site ?? sites[0] ?? ''}
               onChange={(e) =>
                 setFormData({ ...formData, site: e.target.value })
               }
@@ -73,29 +73,24 @@ export function ActivityModal({
             </select>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium text-foreground">
-                Type
-              </label>
-              <select
-                value={formData.type || 'ECOT'}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    type: e.target.value as 'ECOT' | 'ADMIN',
-                  })
-                }
-                className="w-full mt-1 p-2 border border-border rounded-md bg-card text-foreground"
-              >
-                <option value="ECOT">ECOT</option>
-                <option value="ADMIN">ADMIN</option>
-              </select>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-foreground">UG</label>
-              {/* Champ UG à implémenter */}
-            </div>
+          <div>
+            <label className="text-sm font-medium text-foreground">Type</label>
+            <select
+              value={formData.type ?? ActivityType.ECOT}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  type: e.target.value as ActivityType,
+                })
+              }
+              className="w-full mt-1 p-2 border border-border rounded-md bg-card text-foreground"
+            >
+              {Object.values(ActivityType).map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="flex gap-2 justify-end pt-4">
@@ -109,12 +104,12 @@ export function ActivityModal({
               {isEdit ? (
                 <>
                   <Save className="w-4 h-4 mr-2" />
-                  {submitLabel || 'Enregistrer'}
+                  {submitLabel ?? 'Enregistrer'}
                 </>
               ) : (
                 <>
                   <Plus className="w-4 h-4 mr-2" />
-                  {submitLabel || 'Créer'}
+                  {submitLabel ?? 'Créer'}
                 </>
               )}
             </Button>

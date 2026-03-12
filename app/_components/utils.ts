@@ -1,16 +1,12 @@
-import { Etape, EtapeActivity } from '@/prisma/app/generated/prisma/client';
+import { PhaseType, Step, StepActivity } from '@/app/_components/types';
 
-export type PhaseType =
-  | 'preparation'
-  | 'passation'
-  | 'contractualization'
-  | 'execution';
+export type { PhaseType };
 
-export type EtapeActivityWithName = EtapeActivity & { etapeName: string };
+export type StepActivityWithName = StepActivity & { stepName: string };
 
 export type PhasesMap = Record<
   PhaseType,
-  { etape: EtapeActivityWithName; etapeObj?: Etape }[]
+  { stepActivity: StepActivityWithName; step?: Step }[]
 >;
 
 export const PHASE_LABELS: Record<PhaseType, string> = {
@@ -21,19 +17,15 @@ export const PHASE_LABELS: Record<PhaseType, string> = {
 };
 
 export const PHASE_BG_COLORS: Record<PhaseType, string> = {
-  preparation:
-    'bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800',
-  passation:
-    'bg-purple-50 dark:bg-purple-950 border-purple-200 dark:border-purple-800',
-  contractualization:
-    'bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800',
-  execution:
-    'bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800',
+  preparation: 'bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800',
+  passation: 'bg-purple-50 dark:bg-purple-950 border-purple-200 dark:border-purple-800',
+  contractualization: 'bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800',
+  execution: 'bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800',
 };
 
-export function groupEtapesByPhase(
-  etapeActivities: EtapeActivity[],
-  etapes: Etape[],
+export function groupStepsByPhase(
+  stepActivities: StepActivity[],
+  steps: Step[],
 ): PhasesMap {
   const phasesMap: PhasesMap = {
     preparation: [],
@@ -42,12 +34,12 @@ export function groupEtapesByPhase(
     execution: [],
   };
 
-  etapeActivities.forEach((et) => {
-    const etape = etapes.find((e) => e.id === et.etapeId);
-    if (etape?.phaseType && etape.phaseType in phasesMap) {
-      phasesMap[etape.phaseType as PhaseType].push({
-        etape: { ...et, etapeName: etape.nom },
-        etapeObj: etape,
+  stepActivities.forEach((sa) => {
+    const step = steps.find((s) => s.id === sa.stepId);
+    if (step?.phaseType && step.phaseType in phasesMap) {
+      phasesMap[step.phaseType].push({
+        stepActivity: { ...sa, stepName: step.name },
+        step,
       });
     }
   });
